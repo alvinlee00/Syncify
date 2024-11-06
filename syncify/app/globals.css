@@ -1,0 +1,92 @@
+/* Centering container for the entire page */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f3f4f6; /* light background */
+}
+
+/* Styling for the form container */
+.form-container {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+/* Header text */
+h2 {
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+/* Input fields */
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+  width: 100%;
+  padding: 12px 16px;
+  margin: 10px 0;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+/* Input focus effect */
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="text"]:focus {
+  border-color: #2563eb; /* blue focus */
+  outline: none;
+}
+
+/* Button styling */
+button {
+  width: 100%;
+  padding: 12px 16px;
+  margin-top: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #2563eb; /* primary button color */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Hover effect for buttons */
+button:hover {
+  background-color: #1e40af; /* darker blue on hover */
+}
+
+/* Text styling for status */
+.status-text {
+  color: #6b7280; /* gray color for "Not logged in" text */
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+/* Logged in success message */
+.logged-in-text {
+  color: #10b981; /* green for success message */
+}
+
+/* Logout button styling */
+.logout-button {
+  background-color: #ef4444; /* red for logout */
+  color: #ffffff;
+  padding: 10px 16px;
+  margin-top: 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.logout-button:hover {
+  background-color: #b91c1c; /* darker red on hover */
+}
