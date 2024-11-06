@@ -1,0 +1,2 @@
+# Syncify
+syncify app
