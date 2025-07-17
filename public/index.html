@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syncify - Universal Playlist Sync</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Syncify</h1>
+            <p>Sync playlists between any streaming services</p>
+        </header>
+
+        <!-- Connected Services Section -->
+        <div class="services-section card">
+            <div class="section-header">
+                <h2>Connected Services</h2>
+                <span id="connected-count" class="connected-count">0 connected</span>
+            </div>
+            
+            <div id="services-grid" class="services-grid">
+                <div class="loading">Loading services...</div>
+            </div>
+            
+            <div id="connect-services" class="connect-services hidden">
+                <h3>Connect Additional Services</h3>
+                <div id="available-services" class="available-services-grid">
+                    <!-- Available services will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Flow Section -->
+        <div id="sync-section" class="sync-section card hidden">
+            <div class="section-header">
+                <h2>Sync Playlists</h2>
+                <p>Choose source and destination services to sync playlists between them</p>
+            </div>
+
+            <div class="sync-flow">
+                <!-- Step 1: Service Selection -->
+                <div class="sync-step card" id="step-services">
+                    <h3>1. Select Services</h3>
+                    <div class="service-selectors">
+                        <div class="service-selector">
+                            <label for="source-service">From:</label>
+                            <select id="source-service" class="service-dropdown" disabled>
+                                <option value="">Select source service...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="sync-arrow">→</div>
+                        
+                        <div class="service-selector">
+                            <label for="dest-service">To:</label>
+                            <select id="dest-service" class="service-dropdown" disabled>
+                                <option value="">Select destination service...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="sync-capabilities" class="sync-capabilities hidden">
+                        <div class="capability-info">
+                            <span class="capability-badge" id="isrc-support">🎵 ISRC Matching</span>
+                            <span class="capability-badge" id="max-tracks">📊 Track Limit</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Playlist Selection -->
+                <div class="sync-step card hidden" id="step-playlists">
+                    <h3>2. Select Playlist</h3>
+                    <div class="playlist-selection">
+                        <div id="source-playlists" class="source-playlists">
+                            <div class="loading">Loading playlists...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Sync Options -->
+                <div class="sync-step card hidden" id="step-options">
+                    <h3>3. Sync Options</h3>
+                    <div class="sync-options">
+                        <div class="option-group">
+                            <label>
+                                <input type="radio" name="sync-mode" value="create" checked>
+                                Create new playlist
+                            </label>
+                            <label>
+                                <input type="radio" name="sync-mode" value="update">
+                                Update existing playlist (if found)
+                            </label>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label for="custom-name">Custom playlist name (optional):</label>
+                            <input type="text" id="custom-name" placeholder="Leave blank to auto-generate">
+                        </div>
+                        
+                        <button id="start-sync" class="btn btn-sync-start" disabled>Start Sync</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Progress Modal -->
+        <div id="sync-modal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Sync Progress</h2>
+                <div id="sync-details"></div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                    <div id="progress-text" class="progress-text">0%</div>
+                </div>
+                
+                <div id="sync-status" class="sync-status">
+                    <div class="status-item">
+                        <span class="status-label">Source:</span>
+                        <span id="status-source">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Destination:</span>
+                        <span id="status-destination">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Progress:</span>
+                        <span id="status-progress">-</span>
+                    </div>
+                </div>
+                
+                <div id="sync-results" class="sync-results hidden">
+                    <h3>Sync Complete!</h3>
+                    <div id="results-content"></div>
+                    <button id="close-modal" class="btn btn-primary">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Connection Modal -->
+        <div id="service-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close" id="service-modal-close">&times;</span>
+                <div id="service-modal-content">
+                    <!-- Service connection content will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app-enhanced.js"></script>
+</body>
+</html>

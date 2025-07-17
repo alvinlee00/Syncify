@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple Music Test</title>
+    <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 0;
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0051d5;
+        }
+        .log {
+            background: #f5f5f7;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>Apple Music Connection Test</h1>
+    
+    <button onclick="testDeveloperToken()">1. Test Developer Token</button>
+    <button onclick="setupMusicKit()">2. Setup MusicKit</button>
+    <button onclick="connectAppleMusic()">3. Connect Apple Music</button>
+    <button onclick="saveToken()">4. Save Token</button>
+    
+    <div id="log"></div>
+
+    <script>
+        let developerToken = null;
+        let userToken = null;
+
+        function log(message, type = '') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+        }
+
+        async function testDeveloperToken() {
+            try {
+                log('Fetching developer token...');
+                const response = await fetch('/auth/apple/developer-token');
+                const data = await response.json();
+                
+                if (data.developerToken) {
+                    developerToken = data.developerToken;
+                    log(`Developer token received: ${developerToken.substring(0, 50)}...`, 'success');
+                } else {
+                    log('No developer token in response', 'error');
+                    log(JSON.stringify(data, null, 2));
+                }
+            } catch (error) {
+                log(`Error fetching developer token: ${error.message}`, 'error');
+            }
+        }
+
+        async function setupMusicKit() {
+            try {
+                if (!developerToken) {
+                    log('Please fetch developer token first', 'error');
+                    return;
+                }
+
+                log('Configuring MusicKit...');
+                await MusicKit.configure({
+                    developerToken: developerToken,
+                    app: {
+                        name: 'Syncify Test',
+                        build: '1.0.0'
+                    }
+                });
+                
+                log('MusicKit configured successfully', 'success');
+                log(`MusicKit instance available: ${!!MusicKit.getInstance()}`);
+            } catch (error) {
+                log(`Error configuring MusicKit: ${error.message}`, 'error');
+            }
+        }
+
+        async function connectAppleMusic() {
+            try {
+                const music = MusicKit.getInstance();
+                if (!music) {
+                    log('MusicKit not configured. Please setup first.', 'error');
+                    return;
+                }
+
+                log('Requesting Apple Music authorization...');
+                userToken = await music.authorize();
+                
+                if (userToken) {
+                    log(`User token received: ${userToken.substring(0, 50)}...`, 'success');
+                    log(`Music user authorized: ${music.isAuthorized}`, 'success');
+                } else {
+                    log('No user token received', 'error');
+                }
+            } catch (error) {
+                log(`Error authorizing Apple Music: ${error.message}`, 'error');
+            }
+        }
+
+        async function saveToken() {
+            try {
+                if (!userToken) {
+                    log('No user token to save. Please connect first.', 'error');
+                    return;
+                }
+
+                log('Saving user token...');
+                const response = await fetch('/auth/apple/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userToken })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log('Token saved successfully', 'success');
+                    log(JSON.stringify(data, null, 2));
+                } else {
+                    log(`Failed to save token: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                log(`Error saving token: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
