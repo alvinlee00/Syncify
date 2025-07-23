@@ -6,6 +6,7 @@ class SyncifyApp {
         this.selectedDestination = null;
         this.selectedPlaylist = null;
         this.developerToken = null;
+        this.syncInProgress = false;
         this.init();
     }
 
@@ -130,6 +131,12 @@ class SyncifyApp {
     }
 
     closeModal(modalId) {
+        // Prevent closing sync modal during active sync
+        if (modalId === 'sync-modal' && this.syncInProgress) {
+            alert('Sync is in progress. Please wait for it to complete.');
+            return;
+        }
+
         const modal = document.getElementById(modalId);
         modal.style.opacity = '0';
         setTimeout(() => {
@@ -140,12 +147,12 @@ class SyncifyApp {
 
     async loadServices() {
         try {
-            const response = await fetch('/api/services');
+            const response = await fetch('/api/services/');
             const data = await response.json();
-            
+
             this.services = {};
             this.connectedServices = [];
-            
+
             data.services.forEach(service => {
                 this.services[service.type] = service;
                 if (service.connected) {
@@ -384,41 +391,42 @@ class SyncifyApp {
 
     // Apple Music methods
     async setupAppleMusic() {
-        if (typeof MusicKit !== 'undefined') {
-            try {
-                const response = await fetch('/auth/apple/developer-token');
-                const data = await response.json();
-                
-                if (data.developerToken) {
-                    this.developerToken = data.developerToken;
-                    
-                    await MusicKit.configure({
-                        developerToken: this.developerToken,
-                        app: {
-                            name: 'Syncify',
-                            build: '1.0.0'
-                        }
-                    });
-                    
-                    console.log('Apple Music configured successfully');
-                }
-            } catch (error) {
-                console.error('Error setting up Apple Music:', error);
+        try {
+            // Get developer token from backend
+            const response = await fetch('/auth/apple/developer-token');
+            const data = await response.json();
+            this.developerToken = data.developerToken;
+
+            if (typeof MusicKit !== 'undefined') {
+                await MusicKit.configure({
+                    developerToken: this.developerToken,
+                    app: {
+                        name: 'Syncify',
+                        build: '1.0'
+                    }
+                });
+                console.log('Apple Music MusicKit configured successfully');
             }
+        } catch (error) {
+            console.error('Error setting up Apple Music:', error);
         }
     }
 
     async connectAppleMusic() {
         try {
-            if (!this.developerToken) {
-                await this.setupAppleMusic();
+            if (typeof MusicKit === 'undefined') {
+                alert('Apple Music is not available. Please make sure MusicKit JS is loaded.');
+                return;
             }
 
             const music = MusicKit.getInstance();
-            const userToken = await music.authorize();
-            
+            await music.authorize();
+
+            // Get the user token and save it to backend
+            const userToken = music.musicUserToken;
             if (userToken) {
                 await this.saveAppleMusicToken(userToken);
+                // Update status
                 await this.loadServices();
                 this.updateUI();
             }
@@ -430,14 +438,14 @@ class SyncifyApp {
 
     async saveAppleMusicToken(userToken) {
         try {
-            const response = await fetch('/auth/apple/token', {
+            const response = await fetch('/auth/apple/music-token', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ userToken })
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to save Apple Music token');
             }
@@ -523,7 +531,7 @@ class SyncifyApp {
         if (this.selectedSource && this.selectedDestination) {
             // Validate sync combination
             try {
-                const response = await fetch('/api/services/validate-sync', {
+                const response = await fetch('/api/sync/capabilities', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -536,29 +544,29 @@ class SyncifyApp {
 
                 const data = await response.json();
                 
-                if (data.valid) {
-                    this.showSyncCapabilities(data.capabilities);
-                    
+                if (data.can_sync) {
+                    this.showSyncCapabilities(data);
+
                     // Animate capabilities section
                     capabilitiesSection.style.display = 'block';
                     capabilitiesSection.style.opacity = '0';
                     capabilitiesSection.style.transform = 'translateY(-10px)';
-                    
+
                     setTimeout(() => {
                         capabilitiesSection.classList.remove('hidden');
                         capabilitiesSection.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                         capabilitiesSection.style.opacity = '1';
                         capabilitiesSection.style.transform = 'translateY(0)';
                     }, 10);
-                    
+
                     // Load source playlists
                     await this.loadSourcePlaylists();
-                    
+
                     // Animate playlist step
                     playlistStep.style.display = 'block';
                     playlistStep.style.opacity = '0';
                     playlistStep.style.transform = 'translateY(20px)';
-                    
+
                     setTimeout(() => {
                         playlistStep.classList.remove('hidden');
                         playlistStep.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
@@ -566,7 +574,7 @@ class SyncifyApp {
                         playlistStep.style.transform = 'translateY(0)';
                     }, 100);
                 } else {
-                    alert('Cannot sync between these services: ' + data.error);
+                    alert('Cannot sync between these services');
                     this.hideSteps([capabilitiesSection, playlistStep, optionsStep]);
                 }
             } catch (error) {
@@ -595,16 +603,16 @@ class SyncifyApp {
         
         const badges = [];
         
-        if (capabilities.supportsISRC) {
+        if (capabilities.supports_isrc) {
             badges.push('<span class="capability-badge">ISRC Matching Supported</span>');
         }
-        
-        if (capabilities.maxTracks && capabilities.maxTracks !== Infinity) {
-            badges.push(`<span class="capability-badge">Max ${capabilities.maxTracks} Tracks</span>`);
+
+        if (capabilities.max_playlist_tracks && capabilities.max_playlist_tracks !== Infinity) {
+            badges.push(`<span class="capability-badge">Max ${capabilities.max_playlist_tracks} Tracks</span>`);
         }
 
-        badges.push(`<span class="capability-badge">From: ${capabilities.sourceService.name}</span>`);
-        badges.push(`<span class="capability-badge">To: ${capabilities.destinationService.name}</span>`);
+        badges.push(`<span class="capability-badge">From: ${capabilities.source_service.name}</span>`);
+        badges.push(`<span class="capability-badge">To: ${capabilities.destination_service.name}</span>`);
         
         // Add badges with animation
         badges.forEach((badge, index) => {
@@ -628,7 +636,7 @@ class SyncifyApp {
         container.innerHTML = '<div class="loading">Loading playlists...</div>';
 
         try {
-            const response = await fetch(`/api/services/${this.selectedSource}/playlists`);
+            const response = await fetch(`/api/playlists/${this.selectedSource}`);
             const data = await response.json();
 
             this.renderPlaylists(data.playlists);
@@ -652,10 +660,10 @@ class SyncifyApp {
             item.style.transform = 'translateX(-20px)';
             
             item.innerHTML = `
-                <img src="${playlist.image || '/placeholder.png'}" alt="${playlist.name}" class="playlist-thumbnail">
+                <img src="${playlist.images && playlist.images[0] ? playlist.images[0].url : '/placeholder.png'}" alt="${playlist.name}" class="playlist-thumbnail">
                 <div class="playlist-details">
                     <div class="playlist-title">${playlist.name}</div>
-                    <div class="playlist-meta">${playlist.trackCount} tracks • by ${playlist.owner}</div>
+                    <div class="playlist-meta">${playlist.trackCount} tracks • by ${playlist.owner || 'Unknown'}</div>
                 </div>
             `;
 
@@ -708,6 +716,9 @@ class SyncifyApp {
             return;
         }
 
+        // Set sync in progress
+        this.syncInProgress = true;
+
         const modal = document.getElementById('sync-modal');
         const progressFill = document.getElementById('progress-fill');
         const progressText = document.getElementById('progress-text');
@@ -751,8 +762,8 @@ class SyncifyApp {
                     destinationType: this.selectedDestination,
                     sourcePlaylistId: this.selectedPlaylist.id,
                     options: {
-                        updateExisting: syncMode === 'update',
-                        playlistName: customName || null
+                        update_existing: syncMode === 'update',
+                        playlist_name: customName || null
                     }
                 })
             });
@@ -783,8 +794,10 @@ class SyncifyApp {
                             if (eventType === 'progress') {
                                 this.handleSyncProgress(data, progressFill, progressText, statusProgress);
                             } else if (eventType === 'complete') {
+                                this.syncInProgress = false;
                                 this.showSyncCompleteResults(data, syncResults, resultsContent);
                             } else if (eventType === 'error') {
+                                this.syncInProgress = false;
                                 this.showSyncError(data, syncResults, resultsContent);
                             }
                         } catch (e) {
@@ -794,6 +807,7 @@ class SyncifyApp {
                 }
             }
         } catch (error) {
+            this.syncInProgress = false;
             console.error('Sync error:', error);
             statusProgress.textContent = 'Sync failed';
             resultsContent.innerHTML = `<p class="error">Sync failed: ${error.message}</p>`;

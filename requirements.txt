@@ -1,0 +1,11 @@
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+spotipy>=2.23.0
+requests>=2.31.0
+python-jose[cryptography]>=3.3.0
+python-dotenv>=1.0.0
+fuzzywuzzy>=0.18.0
+aiofiles>=23.2.1
+itsdangerous>=2.0.0
+PyJWT>=2.0.0

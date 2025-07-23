@@ -1,7 +1,18 @@
-node_modules/
+# Environment variables
 .env
+
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# System files
 .DS_Store
+
+# Logs
 *.log
-.p8
+
+# Apple Music private keys
 *.p8
-uncommitted/

@@ -1,64 +1,49 @@
-# Syncify - Spotify to Apple Music Playlist Sync
+# Syncify - Universal Playlist Sync (Python Edition)
 
-Syncify allows you to sync your Spotify playlists to Apple Music, combining Spotify's excellent playlist curation with Apple Music's audio quality.
+Sync playlists between Spotify and Apple Music with intelligent track matching.
 
-## Features
+**✨ Now powered by Python/FastAPI for better performance and reliability!**
 
-- OAuth authentication for both Spotify and Apple Music
-- One-click playlist syncing
-- Intelligent track matching using:
-  - ISRC codes (most accurate)
-  - Track name + artist matching
-  - Fuzzy matching algorithms
-- Real-time sync progress tracking
-- Detailed sync reports showing matched and unmatched tracks
+## 🚀 Quick Start
 
-## Prerequisites
-
-### Spotify Developer Account (Free)
-1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-2. Create a new app
-3. Note your Client ID and Client Secret
-4. Add `http://127.0.0.1:3000/auth/spotify/callback` as a Redirect URI
-
-### Apple Developer Account ($99/year)
-1. Sign up at [Apple Developer](https://developer.apple.com)
-2. Create a MusicKit identifier
-3. Generate a private key for MusicKit
-4. Note your Team ID and Key ID
-
-## Setup
-
-1. Clone the repository:
+### 1. Install Dependencies
 ```bash
-git clone https://github.com/alvinlee00/Syncify.git
-cd Syncify
+pip install -r requirements.txt
 ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+### 2. Configure API Credentials
+Copy `.env.example` to `.env` and fill in your credentials:
 
-3. Configure environment variables:
-   - Copy `.env.example` to `.env`
-   - Fill in your Spotify and Apple credentials:
-```
+```env
+# Spotify API (Free Developer Account)
 SPOTIFY_CLIENT_ID=your_spotify_client_id
 SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+
+# Apple Music API (Paid Developer Account $99/year)
 APPLE_TEAM_ID=your_apple_team_id
 APPLE_KEY_ID=your_apple_key_id
-APPLE_PRIVATE_KEY_PATH=./path/to/your/key.p8
+APPLE_PRIVATE_KEY_PATH=./your_private_key.p8
+
+# Apple Sign In
+APPLE_SERVICE_ID=your_service_id
+APPLE_SIGNIN_KEY_ID=your_signin_key_id
+APPLE_SIGNIN_PRIVATE_KEY_PATH=./your_signin_key.p8
 ```
 
-4. Place your Apple Music private key (.p8 file) in the project directory
-
-5. Start the server:
+### 3. Run the Application
 ```bash
-npm start
+python run.py
 ```
 
-6. Open http://127.0.0.1:3000 in your browser
+Visit **http://127.0.0.1:3000** in your browser.
+
+## 🎵 Features
+
+- **Universal Sync**: Spotify ↔ Apple Music playlist synchronization
+- **Smart Matching**: ISRC codes + fuzzy matching for accurate track identification
+- **Real-time Progress**: Live sync progress with detailed reports
+- **OAuth Authentication**: Secure authentication for both services
+- **Modern Architecture**: FastAPI backend with lightweight frontend
 
 ## Usage
 
