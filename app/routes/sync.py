@@ -35,11 +35,16 @@ async def stream_sync_progress(sync_service: SyncService, source_playlist_id: st
             "destinationService": sync_service.destination_service.service_name
         })
 
-    # Add progress callback to options
-    options["on_progress"] = lambda p, c, t: None  # We'll handle progress differently
-
     try:
-        # Start sync
+        # We need to modify the sync service to support async generators for progress
+        # For now, let's send a starting message
+        yield send_event("progress", {
+            "progress": 0,
+            "message": "Starting track matching...",
+            "phase": "matching"
+        })
+
+        # Start sync (progress will be handled in the sync service)
         result = await sync_service.sync_playlist(source_playlist_id, options)
 
         # Send completion event

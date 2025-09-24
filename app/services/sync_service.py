@@ -196,23 +196,25 @@ class SyncService:
     async def match_all_tracks(self, source_tracks: List[Track], on_progress: Optional[Callable] = None) -> List[MatchResult]:
         """Match all tracks with progress reporting"""
         results = []
-        batch_size = 5  # Process in small batches to avoid rate limits
+        batch_size = 15  # Increased batch size for better performance
 
         print(f"Starting track matching for {len(source_tracks)} tracks")
 
         for i in range(0, len(source_tracks), batch_size):
             batch = source_tracks[i:i + batch_size]
 
-            # Process batch
-            batch_results = []
-            for track in batch:
+            # Process batch concurrently for much faster performance
+            async def match_track_with_logging(track):
                 print(f"Matching: {track.artist} - {track.name}")
                 result = await self.track_matcher.match_track(track)
                 if result.destination_track:
                     print(f"  ✓ Found: {result.destination_track.artist} - {result.destination_track.name} (confidence: {result.match_confidence:.0f}%)")
                 else:
                     print(f"  ✗ No match found")
-                batch_results.append(result)
+                return result
+
+            # Process all tracks in this batch concurrently
+            batch_results = await asyncio.gather(*[match_track_with_logging(track) for track in batch])
 
             results.extend(batch_results)
 
@@ -300,6 +302,6 @@ class SyncService:
 
     async def rate_limit_delay(self):
         """Delay to respect API rate limits"""
-        # Apple Music needs more time between requests
-        delay = 0.2 if self.destination_service.service_name == "Apple Music" else 0.1
+        # Reduced delays since we're using concurrent processing
+        delay = 0.1 if self.destination_service.service_name == "Apple Music" else 0.05
         await asyncio.sleep(delay)

@@ -251,18 +251,28 @@ class AppleMusicService:
     def create_playlist(self, name: str, description: str = "", track_ids: List[str] = None) -> Playlist:
         """Create a new playlist"""
         try:
-            # Create playlist
-            playlist_data = {
-                'attributes': {
-                    'name': name,
-                    'description': description
-                }
+            # Create playlist - Apple Music API uses different format than I thought
+            attributes = {'name': name}
+            if description and description.strip():
+                attributes['description'] = description
+
+            # The API expects just attributes, not wrapped in data array
+            request_payload = {
+                'attributes': attributes
             }
+            print(f"🔍 Apple Music API Request:")
+            print(f"URL: {self.base_url}/me/library/playlists")
+            print(f"Payload: {request_payload}")
+            print(f"Headers: {dict(self.session.headers)}")
 
             response = self.session.post(
                 f"{self.base_url}/me/library/playlists",
-                json={'data': [playlist_data]}
+                json=request_payload
             )
+
+            print(f"🔍 Apple Music API Response:")
+            print(f"Status: {response.status_code}")
+            print(f"Response: {response.text}")
 
             if response.status_code != 201:
                 raise Exception(f"Failed to create playlist: {response.text}")
