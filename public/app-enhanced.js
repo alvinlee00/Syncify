@@ -850,6 +850,20 @@ class SyncifyApp {
                     <strong>Duration:</strong> ${(result.duration / 1000).toFixed(1)} seconds
                 </div>
             `;
+
+            // Add unmatched tracks if any
+            if (result.unmatchedTracks && result.unmatchedTracks.length > 0) {
+                html += `
+                    <div class="result-item unmatched-tracks">
+                        <strong>Unmatched tracks (${result.unmatchedTracks.length}):</strong>
+                        <div class="unmatched-list">
+                            ${result.unmatchedTracks.map(track =>
+                                `<div class="unmatched-item">${track.artist} - ${track.name}</div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+            }
         } else {
             // Create mode - show full sync results
             const successRate = result.totalTracks > 0 ? 

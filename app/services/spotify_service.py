@@ -50,7 +50,13 @@ class SpotifyService:
             offset = 0
 
             while True:
-                results = self.client.current_user_playlists(limit=limit, offset=offset)
+                try:
+                    results = self.client.current_user_playlists(limit=limit, offset=offset)
+                except Exception as e:
+                    # Check if it's a 401 token expiry error
+                    if "401" in str(e) or "expired" in str(e).lower():
+                        raise Exception("Spotify access token expired. Please reconnect Spotify in the interface.")
+                    raise e
 
                 for item in results['items']:
                     playlist = Playlist(

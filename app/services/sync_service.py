@@ -111,9 +111,11 @@ class SyncService:
 
             # Collect matched track IDs and unmatched tracks
             matched_track_ids = []
+            matched_results = []  # Keep track of matched results for duplicate detection
             for result in match_results:
                 if result.destination_track:
                     matched_track_ids.append(result.destination_track.id)
+                    matched_results.append(result)  # Store the result for later use
                     sync_result.matched_tracks += 1
                 else:
                     sync_result.unmatched_tracks.append({
@@ -131,10 +133,27 @@ class SyncService:
                     print(f"Updating existing playlist: {destination_playlist.name}")
 
                     existing_tracks = self.destination_service.get_playlist_tracks(destination_playlist.id)
-                    existing_track_ids = {track.id for track in existing_tracks}
 
-                    # Filter out tracks that are already in the playlist
-                    new_track_ids = [track_id for track_id in matched_track_ids if track_id not in existing_track_ids]
+                    # Create a set of existing tracks using name + artist for matching
+                    existing_track_signatures = set()
+                    for track in existing_tracks:
+                        signature = f"{track.name.lower().strip()} - {track.artist.lower().strip()}"
+                        existing_track_signatures.add(signature)
+
+                    # Filter out tracks that are already in the playlist by comparing metadata
+                    new_track_ids = []
+                    for i, track_id in enumerate(matched_track_ids):
+                        # Get the corresponding source track to compare metadata
+                        result = matched_results[i] if i < len(matched_results) else None
+                        if result and result.source_track:
+                            source_signature = f"{result.source_track.name.lower().strip()} - {result.source_track.artist.lower().strip()}"
+                            if source_signature not in existing_track_signatures:
+                                new_track_ids.append(track_id)
+                            else:
+                                print(f"  Skip duplicate: {result.source_track.artist} - {result.source_track.name}")
+                        else:
+                            # Fallback: add the track if we can't match metadata
+                            new_track_ids.append(track_id)
 
                     print(f"Found {len(existing_tracks)} existing tracks, adding {len(new_track_ids)} new tracks")
 
