@@ -16,3 +16,9 @@ __pycache__/
 
 # Apple Music private keys
 *.p8
+
+# Claude Code
+.claude
+
+# MCP configuration with sensitive tokens
+.mcp.json
