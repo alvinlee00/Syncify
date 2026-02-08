@@ -103,7 +103,7 @@ class SyncRunner:
 
             # Fetch source playlist
             print(f"⏳ Fetching source playlist...")
-            source_playlist = source_service.get_playlist(source_playlist_id)
+            source_playlist = source_service.get_playlist_details(source_playlist_id)
             print(f"✅ Found playlist: {source_playlist.name} ({len(source_playlist.tracks)} tracks)")
 
             # Create a mock session dict for sync service
