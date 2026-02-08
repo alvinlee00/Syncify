@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syncify Admin - GitHub Actions Setup</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .admin-header {
+            margin-bottom: 2rem;
+        }
+
+        .admin-header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-header p {
+            color: var(--text-secondary);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .section {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-connected {
+            background: rgba(52, 199, 89, 0.2);
+            color: #34c759;
+        }
+
+        .status-disconnected {
+            background: rgba(255, 59, 48, 0.2);
+            color: #ff3b30;
+        }
+
+        .token-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .token-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .token-name {
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        .token-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .token-value {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.875rem;
+            word-break: break-all;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .token-value:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .token-value.masked {
+            filter: blur(4px);
+            user-select: none;
+        }
+
+        .copy-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .copy-btn:hover {
+            opacity: 0.8;
+        }
+
+        .copy-btn.copied {
+            background: #34c759;
+        }
+
+        .command-block {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .command-block pre {
+            margin: 0;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .copy-all-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 1rem;
+            transition: opacity 0.2s;
+        }
+
+        .copy-all-btn:hover {
+            opacity: 0.8;
+        }
+
+        .playlist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .playlist-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .playlist-card:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .playlist-card.selected {
+            border-color: var(--accent-color);
+            background: rgba(250, 45, 72, 0.1);
+        }
+
+        .playlist-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .playlist-info {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .playlist-id {
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-top: 0.5rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .error {
+            background: rgba(255, 59, 48, 0.2);
+            border: 1px solid rgba(255, 59, 48, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            color: #ff3b30;
+            margin-bottom: 1rem;
+        }
+
+        .info-box {
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid rgba(52, 199, 89, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5rem;
+            height: 1.5rem;
+            background: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <a href="/" class="back-link">← Back to Syncify</a>
+
+        <div class="admin-header">
+            <h1>GitHub Actions Setup</h1>
+            <p>Copy your tokens and configure automated playlist syncing</p>
+        </div>
+
+        <div id="error-message" class="error" style="display: none;"></div>
+
+        <!-- Connection Status -->
+        <div class="section">
+            <h2><span class="step-number">1</span> Connection Status</h2>
+            <div id="connection-status">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <!-- GitHub Secrets -->
+        <div class="section">
+            <h2><span class="step-number">2</span> GitHub Secrets</h2>
+            <p class="token-description">Copy these values to your GitHub repository secrets (Settings > Secrets > Actions)</p>
+
+            <div id="github-secrets">
+                <div class="loading">Loading tokens...</div>
+            </div>
+        </div>
+
+        <!-- GitHub CLI Commands -->
+        <div class="section">
+            <h2><span class="step-number">3</span> Quick Setup with GitHub CLI</h2>
+            <p class="token-description">Or use these commands to set all secrets at once (requires <code>gh</code> CLI)</p>
+
+            <div id="gh-commands">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Playlists -->
+        <div class="section">
+            <h2><span class="step-number">4</span> Your Playlists</h2>
+            <p class="token-description">Copy playlist IDs to use in sync_config.yml</p>
+
+            <div id="playlists">
+                <div class="loading">Loading playlists...</div>
+            </div>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="section">
+            <h2><span class="step-number">5</span> Next Steps</h2>
+            <div class="info-box">
+                <ol style="margin: 0; padding-left: 1.5rem;">
+                    <li>Set GitHub Secrets using the values above (paste in GitHub UI or use CLI commands)</li>
+                    <li>Edit <code>sync_config.yml</code> with your playlist IDs</li>
+                    <li>Commit and push changes: <code>git add . && git commit -m "Configure automated sync" && git push</code></li>
+                    <li>Go to GitHub Actions tab and run "Automated Playlist Sync" workflow</li>
+                </ol>
+            </div>
+            <p style="margin-top: 1rem;">
+                <strong>Need help?</strong> See <a href="https://github.com/yourusername/syncify/blob/main/AUTOMATED_SYNC_SETUP.md" target="_blank">AUTOMATED_SYNC_SETUP.md</a> for detailed instructions.
+            </p>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

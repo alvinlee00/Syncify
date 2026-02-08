@@ -6,7 +6,7 @@ from starlette.middleware.sessions import SessionMiddleware
 import os
 from dotenv import load_dotenv
 
-from app.routes import auth, playlists, sync, services
+from app.routes import auth, playlists, sync, services, admin
 
 load_dotenv()
 
@@ -45,11 +45,17 @@ app.include_router(auth.router, prefix="/auth", tags=["authentication"])
 app.include_router(playlists.router, prefix="/api/playlists", tags=["playlists"])
 app.include_router(sync.router, prefix="/api/sync", tags=["sync"])
 app.include_router(services.router, prefix="/api/services", tags=["services"])
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
 
 @app.get("/")
 async def serve_index():
     """Serve the main application page"""
     return FileResponse("public/index.html")
+
+@app.get("/admin")
+async def serve_admin():
+    """Serve the admin panel page"""
+    return FileResponse("public/admin.html")
 
 @app.get("/{filename}")
 async def serve_static_files(filename: str):

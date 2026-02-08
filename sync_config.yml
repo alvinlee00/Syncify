@@ -1,0 +1,62 @@
+# Syncify Automated Sync Configuration
+# This file defines which playlists to sync automatically
+
+sync_jobs:
+  # Example: Sync your workout playlist
+  - name: "Mar"
+    source:
+      service: spotify
+      playlist_id: "6V1hfgxNlQOowNOTt5zDFC"  # Find this in Spotify playlist URL
+    destination:
+      service: apple
+      mode: update  # Options: create, update
+      playlist_name: "Mar"  # Name for the Apple Music playlist
+
+  - name: "EDM"
+    source:
+      service: spotify
+      playlist_id: "25ajLfEHsyjqZeNCDD8R1O"  # Find this in Spotify playlist URL
+    destination:
+      service: apple
+      mode: update  # Options: create, update
+      playlist_name: "EDM"  # Name for the Apple Music playlist
+
+  - name: "cpop⚡️"
+    source:
+      service: spotify
+      playlist_id: "3aGYb4LcL6gfm8TvGg5xo4"  # Find this in Spotify playlist URL
+    destination:
+      service: apple
+      mode: update  # Options: create, update
+      playlist_name: "cpop⚡️"  # Name for the Apple Music playlist
+
+  - name: "jpop"
+    source:
+      service: spotify
+      playlist_id: "0lltX8gw5TOFcMZ8vOyDh4"  # Find this in Spotify playlist URL
+    destination:
+      service: apple
+      mode: update  # Options: create, update
+      playlist_name: "jpop"  # Name for the Apple Music playlist
+
+  # Add more playlists to sync here:
+  # - name: "Chill Vibes"
+  #   source:
+  #     service: spotify
+  #     playlist_id: "another_playlist_id"
+  #   destination:
+  #     service: apple
+  #     mode: update
+  #     playlist_name: "Chill Vibes (from Spotify)"
+
+# Global settings
+settings:
+  # Skip tracks that couldn't be matched
+  skip_unmatched: true
+
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  log_level: INFO
+
+  # Retry failed syncs
+  retry_on_failure: true
+  max_retries: 3

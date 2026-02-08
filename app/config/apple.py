@@ -22,14 +22,23 @@ class AppleMusicConfig:
     @classmethod
     def generate_developer_token(cls) -> str:
         """Generate Apple Music API developer token"""
-        if not all([cls.TEAM_ID, cls.KEY_ID, cls.PRIVATE_KEY_PATH]):
-            raise ValueError("Missing Apple Music API credentials")
+        if not all([cls.TEAM_ID, cls.KEY_ID]):
+            raise ValueError("Missing Apple Music API credentials (TEAM_ID, KEY_ID)")
 
-        try:
-            with open(cls.PRIVATE_KEY_PATH, 'r') as key_file:
-                private_key = key_file.read()
-        except FileNotFoundError:
-            raise ValueError(f"Apple Music private key file not found: {cls.PRIVATE_KEY_PATH}")
+        # Support loading private key from environment variable (for CI/CD) or file path (for local dev)
+        private_key = os.getenv("APPLE_PRIVATE_KEY")
+        if private_key:
+            # Private key provided directly as environment variable (GitHub Actions, etc.)
+            pass
+        elif cls.PRIVATE_KEY_PATH:
+            # Private key path provided, read from file (local development)
+            try:
+                with open(cls.PRIVATE_KEY_PATH, 'r') as key_file:
+                    private_key = key_file.read()
+            except FileNotFoundError:
+                raise ValueError(f"Apple Music private key file not found: {cls.PRIVATE_KEY_PATH}")
+        else:
+            raise ValueError("Missing Apple Music private key: set APPLE_PRIVATE_KEY or APPLE_PRIVATE_KEY_PATH")
 
         headers = {
             "alg": "ES256",
