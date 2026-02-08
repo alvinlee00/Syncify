@@ -16,14 +16,23 @@ class TrackMatcher:
         """
         Match a source track to a destination track using multiple strategies
         """
-        # Strategy 1: ISRC matching (most accurate)
+        # Strategy 1: ISRC matching (most accurate — same recording, pick best album version)
         if source_track.isrc:
             isrc_match = self._match_by_isrc(source_track)
             if isrc_match:
+                # Refine confidence based on album match quality
+                isrc_confidence = 95.0  # Base: ISRC always means same recording
+                if source_track.album and isrc_match.album:
+                    album_ratio = fuzz.ratio(
+                        source_track.album.lower(),
+                        isrc_match.album.lower()
+                    )
+                    if album_ratio > 80:
+                        isrc_confidence = 100.0  # Same recording + same album
                 return MatchResult(
                     source_track=source_track,
                     destination_track=isrc_match,
-                    match_confidence=100.0,
+                    match_confidence=isrc_confidence,
                     match_method="isrc"
                 )
 
@@ -60,13 +69,72 @@ class TrackMatcher:
         )
 
     def _match_by_isrc(self, source_track: Track) -> Optional[Track]:
-        """Match track by ISRC code"""
+        """Match track by ISRC code, selecting the best album version from multiple candidates"""
         try:
             if hasattr(self.destination_service, 'search_by_isrc'):
-                return self.destination_service.search_by_isrc(source_track.isrc)
+                candidates = self.destination_service.search_by_isrc(source_track.isrc)
+                if not candidates:
+                    return None
+                if len(candidates) == 1:
+                    return candidates[0]
+
+                # Score each candidate and pick the best album version
+                best_candidate = None
+                best_score = -float('inf')
+                for candidate in candidates:
+                    score = self._score_isrc_candidate(source_track, candidate)
+                    if score > best_score:
+                        best_score = score
+                        best_candidate = candidate
+                return best_candidate
             return None
         except Exception:
             return None
+
+    def _score_isrc_candidate(self, source_track: Track, candidate: Track) -> float:
+        """
+        Score an ISRC-matched candidate to pick the best album version.
+        Since ISRC confirms it's the same recording, this focuses on album selection.
+        Higher score = better candidate.
+        """
+        score = 0.0
+
+        # 1. Strong bonus for matching the source album name
+        if source_track.album and candidate.album:
+            album_ratio = fuzz.ratio(source_track.album.lower(), candidate.album.lower())
+            score += album_ratio * 0.5  # Up to +50 for exact album match
+
+        # 2. Bonus/penalty based on album_type (Spotify provides this)
+        if candidate.album_type:
+            if candidate.album_type == 'album':
+                score += 20  # Prefer standard albums
+            elif candidate.album_type == 'single':
+                score += 10  # Singles are OK
+            elif candidate.album_type == 'compilation':
+                score -= 30  # Strongly penalize compilations
+
+        # 3. Keyword-based compilation penalty (works for both services)
+        if candidate.album:
+            album_lower = candidate.album.lower()
+            compilation_keywords = [
+                'hits', 'greatest', 'best of', 'collection', 'compilation',
+                'anthology', 'essentials', 'ultimate', 'complete', 'now that\'s',
+                'various artists', 'soundtrack', 'tribute', 'covers'
+            ]
+            if any(keyword in album_lower for keyword in compilation_keywords):
+                score -= 25
+            if re.search(r'\b(19|20)\d{2}\b.*hits', album_lower):
+                score -= 15
+
+        # 4. Duration similarity bonus
+        if source_track.duration_ms and candidate.duration_ms:
+            diff = abs(source_track.duration_ms - candidate.duration_ms)
+            if diff <= 1000:
+                score += 5
+            elif diff <= 3000:
+                score += 2
+
+        return score
 
     def _match_by_exact_search(self, source_track: Track) -> Optional[Track]:
         """Match track by exact title and artist search"""
@@ -152,13 +220,23 @@ class TrackMatcher:
             elif duration_diff <= 5000:  # Within 5 seconds
                 confidence += 2
 
-        # Bonus for album match
+        # Graduated album match scoring (replaces flat +3)
         if source_track.album and candidate_track.album:
             album_ratio = fuzz.ratio(source_track.album.lower(), candidate_track.album.lower())
-            if album_ratio > 80:
-                confidence += 3
+            if album_ratio > 90:
+                confidence += 8   # Strong album match
+            elif album_ratio > 80:
+                confidence += 5   # Good album match
+            elif album_ratio > 60:
+                confidence += 2   # Partial album match
+            elif album_ratio < 30:
+                confidence -= 3   # Very different album — likely wrong release
 
-        # Penalty for compilation albums (prefer original releases)
+        # Penalty for compilation album_type (Spotify metadata)
+        if candidate_track.album_type == 'compilation':
+            confidence -= 10
+
+        # Keyword-based compilation penalty (works for both services)
         if candidate_track.album:
             album_lower = candidate_track.album.lower()
             compilation_keywords = [
@@ -168,7 +246,7 @@ class TrackMatcher:
             ]
 
             if any(keyword in album_lower for keyword in compilation_keywords):
-                confidence -= 8  # Significant penalty for compilation albums
+                confidence -= 12  # Stronger penalty for compilation albums
 
             # Extra penalty for year-specific compilations like "2021 Hits"
             if re.search(r'\b(19|20)\d{2}\b.*hits', album_lower):

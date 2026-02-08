@@ -11,22 +11,22 @@
     <div class="container">
         <header>
             <h1>Syncify</h1>
-            <p>Sync playlists between any streaming services</p>
+            <p>Sync playlists between your streaming services</p>
         </header>
 
         <!-- Connected Services Section -->
         <div class="services-section card">
             <div class="section-header">
-                <h2>Connected Services</h2>
+                <h2>Services</h2>
                 <span id="connected-count" class="connected-count">0 connected</span>
             </div>
-            
+
             <div id="services-grid" class="services-grid">
                 <div class="loading">Loading services...</div>
             </div>
-            
+
             <div id="connect-services" class="connect-services hidden">
-                <h3>Connect Additional Services</h3>
+                <h3>Add a Service</h3>
                 <div id="available-services" class="available-services-grid">
                     <!-- Available services will be populated here -->
                 </div>
@@ -37,42 +37,47 @@
         <div id="sync-section" class="sync-section card hidden">
             <div class="section-header">
                 <h2>Sync Playlists</h2>
-                <p>Choose source and destination services to sync playlists between them</p>
+                <p>Choose source and destination, pick a playlist, and sync.</p>
             </div>
 
             <div class="sync-flow">
                 <!-- Step 1: Service Selection -->
                 <div class="sync-step card" id="step-services">
-                    <h3>1. Select Services</h3>
+                    <h3><span class="step-number">1</span> Select Services</h3>
                     <div class="service-selectors">
                         <div class="service-selector">
-                            <label for="source-service">From:</label>
+                            <label for="source-service">From</label>
                             <select id="source-service" class="service-dropdown" disabled>
-                                <option value="">Select source service...</option>
+                                <option value="">Select source...</option>
                             </select>
                         </div>
-                        
-                        <div class="sync-arrow">→</div>
-                        
+
+                        <div class="sync-arrow">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </div>
+
                         <div class="service-selector">
-                            <label for="dest-service">To:</label>
+                            <label for="dest-service">To</label>
                             <select id="dest-service" class="service-dropdown" disabled>
-                                <option value="">Select destination service...</option>
+                                <option value="">Select destination...</option>
                             </select>
                         </div>
                     </div>
-                    
+
                     <div id="sync-capabilities" class="sync-capabilities hidden">
                         <div class="capability-info">
-                            <span class="capability-badge" id="isrc-support">🎵 ISRC Matching</span>
-                            <span class="capability-badge" id="max-tracks">📊 Track Limit</span>
+                            <span class="capability-badge" id="isrc-support">ISRC Matching</span>
+                            <span class="capability-badge" id="max-tracks">Track Limit</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Step 2: Playlist Selection -->
                 <div class="sync-step card hidden" id="step-playlists">
-                    <h3>2. Select Playlist</h3>
+                    <h3><span class="step-number">2</span> Choose Playlist</h3>
                     <div class="playlist-selection">
                         <div id="source-playlists" class="source-playlists">
                             <div class="loading">Loading playlists...</div>
@@ -82,7 +87,7 @@
 
                 <!-- Step 3: Sync Options -->
                 <div class="sync-step card hidden" id="step-options">
-                    <h3>3. Sync Options</h3>
+                    <h3><span class="step-number">3</span> Sync Options</h3>
                     <div class="sync-options">
                         <div class="option-group">
                             <label>
@@ -91,15 +96,15 @@
                             </label>
                             <label>
                                 <input type="radio" name="sync-mode" value="update">
-                                Update existing playlist (if found)
+                                Update existing playlist
                             </label>
                         </div>
-                        
+
                         <div class="option-group">
-                            <label for="custom-name">Custom playlist name (optional):</label>
+                            <label for="custom-name">Playlist Name</label>
                             <input type="text" id="custom-name" placeholder="Leave blank to auto-generate">
                         </div>
-                        
+
                         <button id="start-sync" class="btn btn-sync-start" disabled>Start Sync</button>
                     </div>
                 </div>
@@ -109,7 +114,7 @@
         <!-- Sync Progress Modal -->
         <div id="sync-modal" class="modal hidden">
             <div class="modal-content">
-                <h2>Sync Progress</h2>
+                <h2>Syncing</h2>
                 <div id="sync-details"></div>
                 <div class="progress-container">
                     <div class="progress-bar">
@@ -117,26 +122,26 @@
                     </div>
                     <div id="progress-text" class="progress-text">0%</div>
                 </div>
-                
+
                 <div id="sync-status" class="sync-status">
                     <div class="status-item">
-                        <span class="status-label">Source:</span>
+                        <span class="status-label">Source</span>
                         <span id="status-source">-</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-label">Destination:</span>
+                        <span class="status-label">Destination</span>
                         <span id="status-destination">-</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-label">Progress:</span>
+                        <span class="status-label">Status</span>
                         <span id="status-progress">-</span>
                     </div>
                 </div>
-                
+
                 <div id="sync-results" class="sync-results hidden">
-                    <h3>Sync Complete!</h3>
+                    <h3>Sync Complete</h3>
                     <div id="results-content"></div>
-                    <button id="close-modal" class="btn btn-primary">Close</button>
+                    <button id="close-modal" class="btn btn-primary">Done</button>
                 </div>
             </div>
         </div>

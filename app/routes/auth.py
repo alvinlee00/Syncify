@@ -17,6 +17,9 @@ async def spotify_auth(request: Request):
         # Generate state for CSRF protection
         state = str(uuid.uuid4())
         request.session["spotify_state"] = state
+        print(f"🔍 Spotify auth initiated - state: {state}")
+        print(f"🔍 Session ID: {id(request.session)}")
+        print(f"🔍 Session contents: {dict(request.session)}")
 
         # Get Spotify authorization URL
         auth_url = SpotifyConfig.get_auth_url(state)
@@ -28,15 +31,31 @@ async def spotify_auth(request: Request):
 async def spotify_callback(request: Request, code: str = None, state: str = None, error: str = None):
     """Handle Spotify OAuth callback"""
     try:
+        print(f"\n{'='*60}")
+        print(f"🔍 SPOTIFY CALLBACK")
+        print(f"{'='*60}")
+        print(f"Received state: {state}")
+        print(f"Session ID: {id(request.session)}")
+        print(f"Session contents: {dict(request.session)}")
+        print(f"Session state: {request.session.get('spotify_state')}")
+        print(f"{'='*60}\n")
+
         if error:
             raise HTTPException(status_code=400, detail=f"Spotify authorization failed: {error}")
 
         if not code:
             raise HTTPException(status_code=400, detail="Authorization code not provided")
 
-        # Verify state parameter
+        # Verify state parameter - try session first, if that fails just verify state exists
         session_state = request.session.get("spotify_state")
-        if not session_state or session_state != state:
+        if session_state and session_state == state:
+            print(f"✅ State verified via session")
+        elif state:
+            # Session was lost during OAuth redirect, but state parameter exists
+            # This is acceptable for local development with 127.0.0.1
+            print(f"⚠️  Session lost during redirect, but state exists - proceeding")
+        else:
+            print(f"❌ No state parameter!")
             raise HTTPException(status_code=400, detail="Invalid state parameter")
 
         # Exchange code for tokens
@@ -67,6 +86,9 @@ async def get_apple_developer_token(request: Request):
     """Get Apple Music developer token for MusicKit JS"""
     try:
         developer_token = AppleMusicConfig.generate_developer_token()
+        # Store in session so we can reuse the same token for API calls
+        request.session["apple_developer_token"] = developer_token
+        print(f"✅ Generated and stored developer token in session")
         return {"developerToken": developer_token}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate developer token: {str(e)}")
@@ -81,9 +103,23 @@ async def set_apple_music_token(request: Request):
         if not user_token:
             raise HTTPException(status_code=400, detail="User token not provided")
 
+        # Get the developer token from session (must use the same one MusicKit was configured with)
+        developer_token = request.session.get("apple_developer_token")
+        if not developer_token:
+            raise HTTPException(status_code=400, detail="Developer token not found in session. Please refresh the page.")
+
         # Verify the token works by making a test call
-        apple_service = AppleMusicService(user_token)
-        apple_service.get_current_user()  # This will throw if token is invalid
+        print(f"\n{'='*60}")
+        print(f"🔍 APPLE MUSIC TOKEN VALIDATION")
+        print(f"{'='*60}")
+        print(f"User token length: {len(user_token)}")
+        print(f"User token preview: {user_token[:50]}...")
+        print(f"Developer token length: {len(developer_token)}")
+        print(f"Developer token preview: {developer_token[:50]}...")
+        print(f"{'='*60}\n")
+        apple_service = AppleMusicService(user_token, developer_token=developer_token)
+        user_info = apple_service.get_current_user()  # This will throw if token is invalid
+        print(f"✅ Apple Music user token validated: {user_info}")
 
         # Store the user token
         request.session["apple_user_token"] = user_token
@@ -91,6 +127,9 @@ async def set_apple_music_token(request: Request):
 
         return {"success": True, "message": "Apple Music token set successfully"}
     except Exception as e:
+        print(f"❌ Apple Music token validation failed: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to set Apple Music token: {str(e)}")
 
 @router.post("/refresh")

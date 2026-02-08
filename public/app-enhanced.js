@@ -19,16 +19,16 @@ class SyncifyApp {
     }
 
     initializeAnimations() {
-        // Add page load animations
+        // Add page load animations with Apple-style easing
         document.querySelectorAll('.card').forEach((card, index) => {
             card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            
+            card.style.transform = 'translateY(16px)';
+
             setTimeout(() => {
-                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                card.style.transition = 'opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
                 card.style.opacity = '1';
                 card.style.transform = 'translateY(0)';
-            }, index * 100);
+            }, index * 80);
         });
 
         // Add intersection observer for scroll animations
@@ -256,11 +256,14 @@ class SyncifyApp {
         
         const iconClass = service.type === 'spotify' ? 'spotify' : 'apple';
         const statusClass = isConnected ? 'connected' : 'disconnected';
-        const statusText = isConnected ? '✓ Connected' : '○ Disconnected';
+        const statusText = isConnected ? 'Connected' : 'Disconnected';
+
+        const spotifyIcon = `<svg viewBox="0 0 24 24" width="28" height="28"><path fill="white" d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`;
+        const appleIcon = `<svg viewBox="0 0 24 24" width="28" height="28"><path fill="white" d="M23.994 6.124a9.23 9.23 0 0 0-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043A5.022 5.022 0 0 0 19.63.28C18.857.1 18.07.035 17.276.004 16.907 0 16.536 0 16.166 0H7.835c-.37 0-.742 0-1.11.004-.795.03-1.58.096-2.356.276A5.022 5.022 0 0 0 2.424.893C1.306 1.626.56 2.627.244 3.937a9.208 9.208 0 0 0-.24 2.19C0 6.498 0 6.87 0 7.24v9.52c0 .37 0 .743.004 1.11.03.793.096 1.58.276 2.356.317 1.31 1.062 2.31 2.18 3.043a5.022 5.022 0 0 0 1.944.612c.775.18 1.561.246 2.355.276.37.004.74.004 1.11.004h8.332c.37 0 .74 0 1.11-.004.794-.03 1.58-.096 2.355-.276a5.022 5.022 0 0 0 1.944-.612c1.118-.733 1.863-1.733 2.18-3.043.18-.776.246-1.563.276-2.356.004-.37.004-.742.004-1.11V7.24c0-.37 0-.742-.004-1.116zM12 19.459a.899.899 0 0 1-.655-.28L8.5 16.308l-.01-.01a4.9 4.9 0 0 1 0-6.895c.938-.94 2.19-1.46 3.51-1.46s2.573.52 3.51 1.46a4.9 4.9 0 0 1 0 6.895l-.01.01-2.845 2.871a.899.899 0 0 1-.655.28z"/></svg>`;
 
         card.innerHTML = `
             <div class="service-header">
-                <div class="service-icon ${iconClass}">${service.type === 'spotify' ? 'S' : '🎵'}</div>
+                <div class="service-icon ${iconClass}">${service.type === 'spotify' ? spotifyIcon : appleIcon}</div>
                 <div class="service-status ${statusClass}">${statusText}</div>
             </div>
             <div class="service-name">${service.name}</div>
@@ -310,11 +313,13 @@ class SyncifyApp {
     createAvailableServiceCard(service) {
         const card = document.createElement('div');
         card.className = 'available-service';
-        
+
         const iconClass = service.type === 'spotify' ? 'spotify' : 'apple';
-        
+        const spotifyIcon = `<svg viewBox="0 0 24 24" width="28" height="28"><path fill="white" d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`;
+        const appleIcon = `<svg viewBox="0 0 24 24" width="28" height="28"><path fill="white" d="M23.994 6.124a9.23 9.23 0 0 0-.24-2.19c-.317-1.31-1.062-2.31-2.18-3.043A5.022 5.022 0 0 0 19.63.28C18.857.1 18.07.035 17.276.004 16.907 0 16.536 0 16.166 0H7.835c-.37 0-.742 0-1.11.004-.795.03-1.58.096-2.356.276A5.022 5.022 0 0 0 2.424.893C1.306 1.626.56 2.627.244 3.937a9.208 9.208 0 0 0-.24 2.19C0 6.498 0 6.87 0 7.24v9.52c0 .37 0 .743.004 1.11.03.793.096 1.58.276 2.356.317 1.31 1.062 2.31 2.18 3.043a5.022 5.022 0 0 0 1.944.612c.775.18 1.561.246 2.355.276.37.004.74.004 1.11.004h8.332c.37 0 .74 0 1.11-.004.794-.03 1.58-.096 2.355-.276a5.022 5.022 0 0 0 1.944-.612c1.118-.733 1.863-1.733 2.18-3.043.18-.776.246-1.563.276-2.356.004-.37.004-.742.004-1.11V7.24c0-.37 0-.742-.004-1.116zM12 19.459a.899.899 0 0 1-.655-.28L8.5 16.308l-.01-.01a4.9 4.9 0 0 1 0-6.895c.938-.94 2.19-1.46 3.51-1.46s2.573.52 3.51 1.46a4.9 4.9 0 0 1 0 6.895l-.01.01-2.845 2.871a.899.899 0 0 1-.655.28z"/></svg>`;
+
         card.innerHTML = `
-            <div class="service-icon ${iconClass}">${service.type === 'spotify' ? 'S' : '🎵'}</div>
+            <div class="service-icon ${iconClass}">${service.type === 'spotify' ? spotifyIcon : appleIcon}</div>
             <div class="service-name">${service.name}</div>
             <div class="service-connect-text">Click to connect</div>
         `;
@@ -419,20 +424,41 @@ class SyncifyApp {
                 return;
             }
 
+            console.log('🔍 Getting MusicKit instance...');
             const music = MusicKit.getInstance();
-            await music.authorize();
+            console.log('🔍 MusicKit instance:', music);
+            console.log('🔍 MusicKit isAuthorized (before):', music.isAuthorized);
+            console.log('🔍 MusicKit storekit:', music.storekit);
+
+            console.log('🔍 Calling music.authorize()...');
+            const result = await music.authorize();
+            console.log('🔍 Authorization result:', result);
+
+            console.log('🔍 MusicKit isAuthorized (after):', music.isAuthorized);
+            console.log('🔍 MusicKit musicUserToken:', music.musicUserToken);
 
             // Get the user token and save it to backend
             const userToken = music.musicUserToken;
             if (userToken) {
+                console.log('✅ Got user token, length:', userToken.length);
+                console.log('✅ User token preview:', userToken.substring(0, 50) + '...');
                 await this.saveAppleMusicToken(userToken);
                 // Update status
                 await this.loadServices();
                 this.updateUI();
+            } else {
+                console.error('❌ No user token received from MusicKit!');
+                console.error('❌ MusicKit state:', {
+                    isAuthorized: music.isAuthorized,
+                    musicUserToken: music.musicUserToken,
+                    developerToken: music.developerToken ? music.developerToken.substring(0, 50) + '...' : null
+                });
+                alert('Failed to get Apple Music authorization. Make sure you have an active Apple Music subscription and try again.');
             }
         } catch (error) {
-            console.error('Error connecting Apple Music:', error);
-            alert('Failed to connect to Apple Music. Please try again.');
+            console.error('❌ Error connecting Apple Music:', error);
+            console.error('❌ Error stack:', error.stack);
+            alert('Failed to connect to Apple Music: ' + error.message);
         }
     }
 
@@ -930,17 +956,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.app = new SyncifyApp();
 });
 
-// Add CSS for animations
+// Add CSS for animations and dynamic styles
 const style = document.createElement('style');
 style.textContent = `
     .animate-in {
-        animation: fadeInUp 0.5s ease forwards;
+        animation: fadeInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     }
 
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(16px);
         }
         to {
             opacity: 1;
@@ -949,14 +975,15 @@ style.textContent = `
     }
 
     .service-info {
-        padding: var(--space-4);
-        background: var(--color-bg-secondary);
-        border-radius: var(--radius-md);
-        margin-top: var(--space-4);
+        padding: var(--space-5);
+        background: var(--color-bg-tertiary);
+        border-radius: var(--radius-lg);
+        margin-top: var(--space-5);
     }
 
     .service-info p {
         margin-bottom: var(--space-2);
+        font-size: var(--font-size-base);
     }
 
     .service-info p:last-child {
@@ -964,7 +991,7 @@ style.textContent = `
     }
 
     .info-text {
-        color: var(--color-text-secondary);
+        color: var(--color-text-tertiary);
         font-style: italic;
         margin-top: var(--space-4) !important;
     }
@@ -974,7 +1001,7 @@ style.textContent = `
     }
 
     .service-connect-text {
-        color: var(--color-text-secondary);
+        color: var(--color-text-tertiary);
         font-size: var(--font-size-sm);
         margin-top: var(--space-2);
     }

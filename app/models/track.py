@@ -11,6 +11,7 @@ class Track(BaseModel):
     isrc: Optional[str] = None
     uri: Optional[str] = None
     external_ids: Optional[Dict[str, str]] = None
+    album_type: Optional[str] = None  # "album", "single", "compilation" (Spotify provides this)
 
 class Playlist(BaseModel):
     """Base playlist model"""

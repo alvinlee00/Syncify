@@ -56,7 +56,8 @@ class ServiceRegistry:
         # Apple Music service
         apple_token = session.get("apple_user_token")
         if apple_token:
-            services["apple"] = AppleMusicService(apple_token)
+            apple_dev_token = session.get("apple_developer_token")
+            services["apple"] = AppleMusicService(apple_token, developer_token=apple_dev_token)
 
         return services
 

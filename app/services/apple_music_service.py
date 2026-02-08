@@ -8,9 +8,11 @@ from app.config.apple import AppleMusicConfig
 from app.models.track import Track, Playlist
 
 class AppleMusicService:
-    def __init__(self, user_token: str):
+    def __init__(self, user_token: str, developer_token: Optional[str] = None):
         self.user_token = user_token
-        self.developer_token = AppleMusicConfig.generate_developer_token()
+        # Use provided developer token or generate a new one
+        # IMPORTANT: For MusicKit user tokens, must use the SAME developer token that was used to configure MusicKit
+        self.developer_token = developer_token or AppleMusicConfig.generate_developer_token()
         self.base_url = AppleMusicConfig.API_BASE_URL
         self.service_name = "Apple Music"
 
@@ -53,12 +55,19 @@ class AppleMusicService:
         try:
             # Apple Music API doesn't provide extensive user info
             # We'll return basic info or make a test call to verify token
-            response = self.session.get(f"{self.base_url}/me/library/playlists?limit=1")
+            url = f"{self.base_url}/me/library/playlists?limit=1"
+            print(f"🔍 Making request to: {url}")
+            print(f"🔍 Headers: {dict(self.session.headers)}")
+
+            response = self.session.get(url)
+
+            print(f"🔍 Response status: {response.status_code}")
+            print(f"🔍 Response body: {response.text[:200]}")
 
             if response.status_code == 200:
                 return {"id": "current_user", "display_name": "Apple Music User"}
             else:
-                raise Exception("Invalid user token")
+                raise Exception(f"Invalid user token - API returned {response.status_code}: {response.text}")
         except Exception as e:
             raise Exception(f"Failed to get current user: {str(e)}")
 
@@ -216,35 +225,36 @@ class AppleMusicService:
         except Exception as e:
             raise Exception(f"Failed to search tracks: {str(e)}")
 
-    def search_by_isrc(self, isrc: str) -> Optional[Track]:
-        """Search for a track by ISRC"""
+    def search_by_isrc(self, isrc: str, limit: int = 10) -> List[Track]:
+        """Search for tracks by ISRC, returning multiple candidates for best-version selection"""
         try:
             params = {
                 'filter[isrc]': isrc,
                 'types': 'songs',
-                'limit': 1
+                'limit': limit
             }
 
             response = self.session.get(f"{self.base_url}/catalog/us/search", params=params)
 
             if response.status_code != 200:
-                return None
+                return []
 
             data = response.json()
+            tracks = []
 
             if 'songs' in data['results'] and data['results']['songs']['data']:
-                item = data['results']['songs']['data'][0]
-                attributes = item['attributes']
-                return Track(
-                    id=item['id'],
-                    name=attributes['name'],
-                    artist=attributes['artistName'],
-                    album=attributes['albumName'],
-                    duration_ms=attributes.get('durationInMillis'),
-                    isrc=attributes.get('isrc')
-                )
+                for item in data['results']['songs']['data']:
+                    attributes = item['attributes']
+                    tracks.append(Track(
+                        id=item['id'],
+                        name=attributes['name'],
+                        artist=attributes['artistName'],
+                        album=attributes['albumName'],
+                        duration_ms=attributes.get('durationInMillis'),
+                        isrc=attributes.get('isrc')
+                    ))
 
-            return None
+            return tracks
         except Exception as e:
             raise Exception(f"Failed to search by ISRC: {str(e)}")
 

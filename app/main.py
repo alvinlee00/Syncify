@@ -20,7 +20,9 @@ app = FastAPI(
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("SESSION_SECRET", "syncify-secret-key"),
-    max_age=24 * 60 * 60  # 24 hours
+    max_age=24 * 60 * 60,  # 24 hours
+    same_site="lax",  # Allow OAuth redirects
+    https_only=False  # Set to True in production with HTTPS
 )
 
 # Add CORS middleware

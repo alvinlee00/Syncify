@@ -25,9 +25,10 @@ class SyncService:
             source_service = SpotifyService(spotify_tokens["access_token"])
         elif source_type.lower() == "apple":
             apple_token = session.get("apple_user_token")
+            apple_dev_token = session.get("apple_developer_token")
             if not apple_token:
                 raise Exception(f"Source service {source_type} is not connected")
-            source_service = AppleMusicService(apple_token)
+            source_service = AppleMusicService(apple_token, developer_token=apple_dev_token)
         else:
             raise Exception(f"Unsupported source service: {source_type}")
 
@@ -39,9 +40,10 @@ class SyncService:
             destination_service = SpotifyService(spotify_tokens["access_token"])
         elif destination_type.lower() == "apple":
             apple_token = session.get("apple_user_token")
+            apple_dev_token = session.get("apple_developer_token")
             if not apple_token:
                 raise Exception(f"Destination service {destination_type} is not connected")
-            destination_service = AppleMusicService(apple_token)
+            destination_service = AppleMusicService(apple_token, developer_token=apple_dev_token)
         else:
             raise Exception(f"Unsupported destination service: {destination_type}")
 
@@ -124,6 +126,27 @@ class SyncService:
                         "album": result.source_track.album
                     })
 
+            # Deduplicate: if multiple source tracks matched to the same destination track,
+            # keep only the first occurrence (e.g., same song from different albums)
+            seen_ids = set()
+            deduplicated_track_ids = []
+            deduplicated_results = []
+            for track_id, result in zip(matched_track_ids, matched_results):
+                if track_id not in seen_ids:
+                    seen_ids.add(track_id)
+                    deduplicated_track_ids.append(track_id)
+                    deduplicated_results.append(result)
+                else:
+                    print(f"  Dedup: skipping duplicate destination track {result.destination_track.name} by {result.destination_track.artist}")
+
+            duplicates_removed = len(matched_track_ids) - len(deduplicated_track_ids)
+            if duplicates_removed > 0:
+                print(f"Removed {duplicates_removed} duplicate destination tracks")
+
+            matched_track_ids = deduplicated_track_ids
+            matched_results = deduplicated_results
+            sync_result.matched_tracks = len(matched_track_ids)
+
             print(f"Matched {sync_result.matched_tracks} out of {sync_result.total_tracks} tracks")
 
             # Create or update destination playlist
@@ -134,26 +157,33 @@ class SyncService:
 
                     existing_tracks = self.destination_service.get_playlist_tracks(destination_playlist.id)
 
-                    # Create a set of existing tracks using name + artist for matching
+                    # Build both a track ID set and a name+artist signature set from existing tracks
+                    existing_track_ids = set()
                     existing_track_signatures = set()
                     for track in existing_tracks:
+                        existing_track_ids.add(track.id)
                         signature = f"{track.name.lower().strip()} - {track.artist.lower().strip()}"
                         existing_track_signatures.add(signature)
 
-                    # Filter out tracks that are already in the playlist by comparing metadata
+                    # Filter out tracks that already exist (by ID or by destination name+artist signature)
                     new_track_ids = []
                     for i, track_id in enumerate(matched_track_ids):
-                        # Get the corresponding source track to compare metadata
+                        # First check: exact track ID match (most reliable)
+                        if track_id in existing_track_ids:
+                            result = matched_results[i] if i < len(matched_results) else None
+                            if result and result.source_track:
+                                print(f"  Skip (ID match): {result.source_track.artist} - {result.source_track.name}")
+                            continue
+
+                        # Second check: destination track name+artist signature match
                         result = matched_results[i] if i < len(matched_results) else None
-                        if result and result.source_track:
-                            source_signature = f"{result.source_track.name.lower().strip()} - {result.source_track.artist.lower().strip()}"
-                            if source_signature not in existing_track_signatures:
-                                new_track_ids.append(track_id)
-                            else:
-                                print(f"  Skip duplicate: {result.source_track.artist} - {result.source_track.name}")
-                        else:
-                            # Fallback: add the track if we can't match metadata
-                            new_track_ids.append(track_id)
+                        if result and result.destination_track:
+                            dest_signature = f"{result.destination_track.name.lower().strip()} - {result.destination_track.artist.lower().strip()}"
+                            if dest_signature in existing_track_signatures:
+                                print(f"  Skip (signature match): {result.source_track.artist} - {result.source_track.name}")
+                                continue
+
+                        new_track_ids.append(track_id)
 
                     print(f"Found {len(existing_tracks)} existing tracks, adding {len(new_track_ids)} new tracks")
 

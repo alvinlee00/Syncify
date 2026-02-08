@@ -121,7 +121,8 @@ class SpotifyService:
                             duration_ms=track.get('duration_ms'),
                             isrc=track.get('external_ids', {}).get('isrc'),
                             uri=track.get('uri'),
-                            external_ids=track.get('external_ids', {})
+                            external_ids=track.get('external_ids', {}),
+                            album_type=track['album'].get('album_type')
                         )
                         tracks.append(track_obj)
 
@@ -148,7 +149,8 @@ class SpotifyService:
                     duration_ms=item.get('duration_ms'),
                     isrc=item.get('external_ids', {}).get('isrc'),
                     uri=item.get('uri'),
-                    external_ids=item.get('external_ids', {})
+                    external_ids=item.get('external_ids', {}),
+                    album_type=item['album'].get('album_type')
                 )
                 tracks.append(track)
 
@@ -156,14 +158,14 @@ class SpotifyService:
         except Exception as e:
             raise Exception(f"Failed to search tracks: {str(e)}")
 
-    def search_by_isrc(self, isrc: str) -> Optional[Track]:
-        """Search for a track by ISRC"""
+    def search_by_isrc(self, isrc: str, limit: int = 10) -> List[Track]:
+        """Search for tracks by ISRC, returning multiple candidates for best-version selection"""
         try:
-            results = self.client.search(q=f"isrc:{isrc}", type='track', limit=1)
+            results = self.client.search(q=f"isrc:{isrc}", type='track', limit=limit)
+            tracks = []
 
-            if results['tracks']['items']:
-                item = results['tracks']['items'][0]
-                return Track(
+            for item in results['tracks']['items']:
+                tracks.append(Track(
                     id=item['id'],
                     name=item['name'],
                     artist=", ".join([artist['name'] for artist in item['artists']]),
@@ -171,9 +173,10 @@ class SpotifyService:
                     duration_ms=item.get('duration_ms'),
                     isrc=item.get('external_ids', {}).get('isrc'),
                     uri=item.get('uri'),
-                    external_ids=item.get('external_ids', {})
-                )
-            return None
+                    external_ids=item.get('external_ids', {}),
+                    album_type=item['album'].get('album_type')
+                ))
+            return tracks
         except Exception as e:
             raise Exception(f"Failed to search by ISRC: {str(e)}")
 
