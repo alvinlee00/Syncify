@@ -100,6 +100,10 @@ class AppleMusicService:
                             artwork_url = url_template.replace('{w}', '640').replace('{h}', '640')
                             images = [{'url': artwork_url, 'width': 640, 'height': 640}]
 
+                    # Skip playlists without names (system playlists, etc.)
+                    if 'name' not in attributes:
+                        continue
+
                     playlist = Playlist(
                         id=item['id'],
                         name=attributes['name'],
