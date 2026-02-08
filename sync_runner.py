@@ -101,51 +101,44 @@ class SyncRunner:
             print(f"📥 Source: {source_config['service']} - Playlist ID: {source_playlist_id}")
             print(f"📤 Destination: {dest_config['service']} - Mode: {dest_mode}")
 
-            # Fetch source playlist
-            print(f"⏳ Fetching source playlist...")
-            source_playlist = source_service.get_playlist_details(source_playlist_id)
-            print(f"✅ Found playlist: {source_playlist.name} ({len(source_playlist.tracks)} tracks)")
-
-            # Create a mock session dict for sync service
+            # Create a session dict for sync service
             session = {
                 "spotify_tokens": {"access_token": self.spotify_service.access_token} if self.spotify_service else None,
                 "apple_user_token": self.apple_service.user_token if self.apple_service else None,
                 "apple_developer_token": self.apple_service.developer_token if self.apple_service else None,
             }
 
-            # Prepare sync request
-            sync_request = {
-                "source": {
-                    "type": source_config["service"],
-                    "playlistId": source_playlist_id
-                },
-                "destination": {
-                    "type": dest_config["service"],
-                    "mode": dest_mode,
-                    "playlistName": dest_playlist_name or f"{source_playlist.name} (from {source_config['service'].title()})"
-                }
+            # Create sync service instance (this is how the web app does it)
+            sync_service = SyncService.create_from_session(
+                session,
+                source_config["service"],
+                dest_config["service"]
+            )
+
+            # Prepare sync options
+            options = {
+                "update_existing": dest_mode == "update",  # Boolean, not string!
+                "playlist_name": dest_playlist_name
             }
 
-            # Run sync
+            # Run sync (this method fetches the playlist internally)
             print(f"⏳ Starting sync process...")
-            result = await SyncService.sync_playlist(session, sync_request)
+            result = await sync_service.sync_playlist(source_playlist_id, options)
 
             # Report results
-            if result.success:
-                print(f"\n✅ Sync completed successfully!")
-                print(f"   Matched: {result.matched_count}/{result.total_tracks} tracks")
-                print(f"   Destination playlist: {result.destination_playlist_name}")
-                if result.destination_playlist_id:
-                    print(f"   Playlist ID: {result.destination_playlist_id}")
-            else:
-                print(f"\n❌ Sync failed: {result.error}")
+            print(f"\n✅ Sync completed successfully!")
+            print(f"   Source playlist: {result.source_playlist.name if result.source_playlist else 'Unknown'}")
+            print(f"   Matched: {result.matched_tracks}/{result.total_tracks} tracks")
+            if result.destination_playlist:
+                print(f"   Destination playlist: {result.destination_playlist.name}")
+                print(f"   Playlist ID: {result.destination_playlist.id}")
 
             return {
                 "job_name": job_name,
-                "success": result.success,
-                "matched": result.matched_count,
+                "success": True,
+                "matched": result.matched_tracks,
                 "total": result.total_tracks,
-                "error": result.error
+                "error": None
             }
 
         except Exception as e:
