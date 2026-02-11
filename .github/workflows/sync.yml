@@ -3,7 +3,7 @@ name: Automated Playlist Sync
 on:
   # Run every 6 hours
   schedule:
-    - cron: '0 */6 * * *'  # At minute 0 past every 6th hour (00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 0 * * *'  # At minute 0 past every 6th hour (00:00, 06:00, 12:00, 18:00 UTC)
 
   # Allow manual triggering from GitHub Actions tab
   workflow_dispatch:
